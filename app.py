@@ -19,10 +19,16 @@ from dashboard.utils import apply_notebook_transformations, compute_kpis, get_fi
 app = Flask(__name__)
 app.config["SECRET_KEY"] = settings.secret_key
 
-engine = get_engine()
+
+def get_db_engine():
+    """Create engine safely so deployment misconfig does not crash app startup."""
+    try:
+        return get_engine(), ""
+    except Exception as exc:
+        return None, str(exc)
 
 
-def get_prepared_data():
+def get_prepared_data(engine):
     """Load and transform dataframe from PostgreSQL table."""
     raw_df = load_customer_data(engine)
     return apply_notebook_transformations(raw_df)
@@ -31,6 +37,17 @@ def get_prepared_data():
 @app.route("/")
 def index():
     """Main dashboard page."""
+    engine, engine_error = get_db_engine()
+    if engine is None:
+        return render_template(
+            "index.html",
+            error=(
+                "Database engine initialization failed. "
+                "Check DATABASE_URL/DB_* deployment variables. "
+                f"Details: {engine_error}"
+            ),
+        )
+
     db_ok, db_error = check_connection(engine)
     if not db_ok:
         # Keep message user-friendly while still helpful for deployment debugging.
@@ -43,7 +60,7 @@ def index():
             ),
         )
 
-    data = get_prepared_data()
+    data = get_prepared_data(engine)
     selected = parse_filters(request.args)
     filtered = apply_filters(data, selected)
 
@@ -61,30 +78,65 @@ def index():
 @app.route("/insights")
 def insights_page():
     """Dedicated insights page."""
-    data = get_prepared_data()
-    filtered = apply_filters(data, parse_filters(request.args))
-    return render_template("insights.html", insights=build_insights(filtered))
+    engine, engine_error = get_db_engine()
+    if engine is None:
+        return render_template(
+            "insights.html",
+            insights=[
+                {
+                    "title": "Database Error",
+                    "detail": (
+                        "Database engine initialization failed. "
+                        f"Details: {engine_error}"
+                    ),
+                }
+            ],
+        )
+
+    try:
+        data = get_prepared_data(engine)
+        filtered = apply_filters(data, parse_filters(request.args))
+        return render_template("insights.html", insights=build_insights(filtered))
+    except Exception as exc:
+        return render_template(
+            "insights.html",
+            insights=[{"title": "Database Error", "detail": str(exc)}],
+        )
 
 
 @app.route("/api/refresh")
 def api_refresh():
     """JSON API endpoint for auto-refresh button."""
-    data = get_prepared_data()
-    filtered = apply_filters(data, parse_filters(request.args))
-    return jsonify(
-        {
-            "kpis": compute_kpis(filtered),
-            "insights": build_insights(filtered),
-            "record_count": int(filtered.shape[0]),
-        }
-    )
+    engine, engine_error = get_db_engine()
+    if engine is None:
+        return jsonify({"error": f"Database engine initialization failed: {engine_error}"}), 500
+
+    try:
+        data = get_prepared_data(engine)
+        filtered = apply_filters(data, parse_filters(request.args))
+        return jsonify(
+            {
+                "kpis": compute_kpis(filtered),
+                "insights": build_insights(filtered),
+                "record_count": int(filtered.shape[0]),
+            }
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route("/export/csv")
 def export_csv():
     """Export filtered data to CSV."""
-    data = get_prepared_data()
-    filtered = apply_filters(data, parse_filters(request.args))
+    engine, engine_error = get_db_engine()
+    if engine is None:
+        return jsonify({"error": f"Database engine initialization failed: {engine_error}"}), 500
+
+    try:
+        data = get_prepared_data(engine)
+        filtered = apply_filters(data, parse_filters(request.args))
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
     csv_buffer = StringIO()
     filtered.to_csv(csv_buffer, index=False)
