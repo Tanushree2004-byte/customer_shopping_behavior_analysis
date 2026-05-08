@@ -27,12 +27,12 @@ def load_customer_data(engine: Engine) -> pd.DataFrame:
     return pd.read_sql(query, engine)
 
 
-def check_connection(engine: Engine) -> bool:
-    """Quick health-check query for DB connectivity."""
+def check_connection(engine: Engine) -> tuple[bool, str]:
+    """Quick health-check query for DB connectivity with debug-safe message."""
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
-        return True
-    except Exception:
-        return False
+        return True, ""
+    except Exception as exc:
+        return False, str(exc)
 

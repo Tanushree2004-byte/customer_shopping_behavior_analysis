@@ -31,9 +31,17 @@ def get_prepared_data():
 @app.route("/")
 def index():
     """Main dashboard page."""
-    db_ok = check_connection(engine)
+    db_ok, db_error = check_connection(engine)
     if not db_ok:
-        return render_template("index.html", error="Database connection failed. Check your .env values.")
+        # Keep message user-friendly while still helpful for deployment debugging.
+        return render_template(
+            "index.html",
+            error=(
+                "Database connection failed. Verify deployment environment variables "
+                "(DATABASE_URL or DB_* values) and ensure the cloud DB is reachable. "
+                f"Details: {db_error}"
+            ),
+        )
 
     data = get_prepared_data()
     selected = parse_filters(request.args)
