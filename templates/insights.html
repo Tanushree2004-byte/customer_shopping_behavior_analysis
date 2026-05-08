@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="section-title mb-3">Business Insights</h3>
+<div class="row g-3">
+    {% for insight in insights %}
+    <div class="col-md-6">
+        <div class="insight-card">
+            <h5>{{ insight.title }}</h5>
+            <p class="mb-0">{{ insight.detail }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block content %}
+{% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% else %}
+    <form method="get" class="glass-card p-3 mb-4">
+        <div class="row g-2">
+            <div class="col-md-2">
+                <label class="form-label text-light">Gender</label>
+                <select class="form-select form-select-sm" name="gender">
+                    <option value="">All</option>
+                    {% for v in filters.gender %}
+                    <option value="{{ v }}" {% if selected.gender == v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-light">Age Group</label>
+                <select class="form-select form-select-sm" name="age_group">
+                    <option value="">All</option>
+                    {% for v in filters.age_group %}
+                    <option value="{{ v }}" {% if selected.age_group == v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-light">Category</label>
+                <select class="form-select form-select-sm" name="category">
+                    <option value="">All</option>
+                    {% for v in filters.category %}
+                    <option value="{{ v }}" {% if selected.category == v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-light">Subscription</label>
+                <select class="form-select form-select-sm" name="subscription_status">
+                    <option value="">All</option>
+                    {% for v in filters.subscription_status %}
+                    <option value="{{ v }}" {% if selected.subscription_status == v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-light">Shipping</label>
+                <select class="form-select form-select-sm" name="shipping_type">
+                    <option value="">All</option>
+                    {% for v in filters.shipping_type %}
+                    <option value="{{ v }}" {% if selected.shipping_type == v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label text-light">Discount</label>
+                <select class="form-select form-select-sm" name="discount_applied">
+                    <option value="">All</option>
+                    {% for v in filters.discount_applied %}
+                    <option value="{{ v }}" {% if selected.discount_applied == v %}selected{% endif %}>{{ v }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row g-2 mt-2">
+            <div class="col-md-9">
+                <input type="text" class="form-control form-control-sm" name="search" value="{{ selected.search }}" placeholder="Search by product, category, or location...">
+            </div>
+            <div class="col-md-3 d-grid">
+                <button class="btn btn-primary btn-sm" type="submit">Apply Filters</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4 col-xl-2"><div class="kpi-card"><h6>Total Revenue</h6><h3>${{ "{:,.2f}".format(kpis.total_revenue) }}</h3></div></div>
+        <div class="col-md-4 col-xl-2"><div class="kpi-card"><h6>Total Customers</h6><h3>{{ kpis.total_customers }}</h3></div></div>
+        <div class="col-md-4 col-xl-2"><div class="kpi-card"><h6>Avg Purchase</h6><h3>${{ "{:,.2f}".format(kpis.avg_purchase_amount) }}</h3></div></div>
+        <div class="col-md-4 col-xl-2"><div class="kpi-card"><h6>Avg Rating</h6><h3>{{ kpis.avg_review_rating }}</h3></div></div>
+        <div class="col-md-4 col-xl-2"><div class="kpi-card"><h6>Repeat Buyers %</h6><h3>{{ kpis.repeat_buyers_pct }}%</h3></div></div>
+        <div class="col-md-4 col-xl-2"><div class="kpi-card"><h6>Subscribers %</h6><h3>{{ kpis.subscribers_pct }}%</h3></div></div>
+    </div>
+
+    <section class="mb-4">
+        <h4 class="section-title">Revenue Analytics</h4>
+        <div class="row g-3">
+            <div class="col-lg-6"><div class="chart-card">{{ charts.revenue_by_gender | safe }}</div></div>
+            <div class="col-lg-6"><div class="chart-card">{{ charts.revenue_by_age | safe }}</div></div>
+            <div class="col-lg-6"><div class="chart-card">{{ charts.revenue_by_subscription | safe }}</div></div>
+            <div class="col-lg-6"><div class="chart-card">{{ charts.revenue_by_category | safe }}</div></div>
+        </div>
+    </section>
+
+    <section class="mb-4">
+        <h4 class="section-title">Product Analytics</h4>
+        <div class="row g-3">
+            <div class="col-lg-6"><div class="chart-card">{{ charts.top_rated_products | safe }}</div></div>
+            <div class="col-lg-6"><div class="chart-card">{{ charts.top_purchased_products | safe }}</div></div>
+            <div class="col-lg-6"><div class="chart-card">{{ charts.category_purchases | safe }}</div></div>
+            <div class="col-lg-6"><div class="chart-card">{{ charts.discounted_product_analysis | safe }}</div></div>
+        </div>
+    </section>
+
+    <section class="mb-4">
+        <h4 class="section-title">Customer, Shipping, and Subscription Analytics</h4>
+        <div class="row g-3">
+            <div class="col-lg-4"><div class="chart-card">{{ charts.customer_segments | safe }}</div></div>
+            <div class="col-lg-4"><div class="chart-card">{{ charts.segment_revenue | safe }}</div></div>
+            <div class="col-lg-4"><div class="chart-card">{{ charts.shipping_avg_spending | safe }}</div></div>
+            <div class="col-lg-4"><div class="chart-card">{{ charts.shipping_total_orders | safe }}</div></div>
+            <div class="col-lg-4"><div class="chart-card">{{ charts.subscribers_vs_non | safe }}</div></div>
+            <div class="col-lg-4"><div class="chart-card">{{ charts.repeat_vs_subscribers | safe }}</div></div>
+            <div class="col-lg-12"><div class="chart-card">{{ charts.subscription_revenue | safe }}</div></div>
+        </div>
+    </section>
+
+    <section class="mb-4">
+        <h4 class="section-title">Heatmap Analytics</h4>
+        <div class="row g-3">
+            <div class="col-lg-4"><div class="chart-card">{{ charts.heatmap_age_category | safe }}</div></div>
+            <div class="col-lg-4"><div class="chart-card">{{ charts.heatmap_gender_category | safe }}</div></div>
+            <div class="col-lg-4"><div class="chart-card">{{ charts.heatmap_discount_behavior | safe }}</div></div>
+        </div>
+    </section>
+
+    <section>
+        <h4 class="section-title">Business Insights</h4>
+        <div class="row g-3">
+            {% for insight in insights %}
+            <div class="col-md-6 col-xl-4">
+                <div class="insight-card">
+                    <h6>{{ insight.title }}</h6>
+                    <p>{{ insight.detail }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+{% endblock %}
+
